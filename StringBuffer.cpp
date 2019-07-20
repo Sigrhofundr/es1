@@ -3,43 +3,46 @@
 //costruisce un oggetto con un buffer di dimensione iniziale ragionevole,inizializzandolo con il terminatore di stringa
 StringBuffer::StringBuffer()
 {
-    bufLength = DEF_SIZE;
-    buf = new char[DEF_SIZE];
-    length = 0;
+    StringBuffer::buffer = new char[DEF_SIZE];
+    memcpy(StringBuffer::buffer, "\0", StringBuffer::buffer_size);
+    StringBuffer::buffer_size = StringBuffer::DEF_SIZE;
+    StringBuffer::n_char = 0;
 }
 //costruisce un oggetto allocando un buffer di dimensione sufficiente a contenere l’array di caratteri str (compreso il terminatore finale) e segnando
 //correttamente il numero di caratteri effettivamente utilizzati
 StringBuffer::StringBuffer(const char *str) {
-    int l = strlen(str);
-    bufLength = (l/ DEF_SIZE+1) * DEF_SIZE;
-    buf = new char[bufLength];
-    strcpy_s(buf, bufLength, str);
-    length = l;
+    if(str != nullptr)
+    {
+        StringBuffer::buffer_size = strlen(str);
+        StringBuffer::buffer = new char[StringBuffer::buffer_size];
+        memcpy(StringBuffer::buffer, str, StringBuffer::buffer_size);
+        memcpy(StringBuffer::buffer + StringBuffer::buffer_size, "\0", sizeof(char));
+        StringBuffer::n_char = StringBuffer::buffer_size;
+    }
+
 }
 
 //costruisce un oggetto con un buffer iniziale di dimensione adeguata a contenere i caratteri contenuti nell’oggetto sb e inizializzato con
 //una copia di tali caratteri
 StringBuffer::StringBuffer(const StringBuffer &sb) {
-    bufLength = sb.bufLength;
-    length = sb.length;
-    buf = new char[sb.bufLength];
-    strcpy_s(buf, bufLength, sb.buf);
+    buffer_size = sb.buffer_size;
+    StringBuffer::buffer = new char[buffer_size];
+    memcpy(buffer, sb.buffer, buffer_size);
 }
 
 StringBuffer::~StringBuffer() {
-    delete[] buf;
+    delete[] buffer;
 }
 
 //assegna, al buffer corrente, il contenuto del buffer sb
 StringBuffer& StringBuffer::operator=(const StringBuffer &sb) {
     if(this != &sb) {
-        delete[] this->buf;
-        this->buf = nullptr;
-        this->length = sb.length;
+        delete[] this->buffer;
+        this->buffer = nullptr;
         //test
-        this->bufLength = sb.bufLength;
-        this->buf = new char[bufLength];
-        memcpy(this->buf, sb.buf, this->length);
+        this->buffer_size = sb.buffer_size;
+        this->buffer = new char[buffer_size];
+        memcpy(this->buffer, sb.buffer, this->buffer_size);
         /*
         this->buf = new char[length];
         memcpy(this->buf, sb.buf, length);
@@ -50,71 +53,126 @@ StringBuffer& StringBuffer::operator=(const StringBuffer &sb) {
 
 //restituisce il numero di caratteri utilizzati dalla stringa memorizzata nel buffer;
 size_t StringBuffer::size() {
-    return length;
+    return StringBuffer::n_char;
 }
 
 //restituisce la dimensione totale del buffer di caratteri attualmente allocato;
 size_t StringBuffer::capacity() {
-    return bufLength;
+    return buffer_size;
 }
 
 //porta a 0 il numero di caratteri utilizzati;
 void StringBuffer::clear() {
+    /*
     this->length = 0;
-    strcpy_s(this->buf,this->bufLength, "");
+    strcpy_s(this->buf,this->bufLength, "");*/
+    StringBuffer::n_char = 0;
 }
 
 /*inserisce il contenuto s nella posizione pos del buffer; o se pos è maggiore di size (), inserisce spazi tra size ()
  * e pos, riallocando il buffer se necessario*/
 void StringBuffer::insert(const char *str, size_t pos) {
-    int str_l = strlen(str);
-    if(length + str_l >= bufLength)
-    {
-        int newSize = length + str_l;
-        int newBufLength = (newSize/ DEF_SIZE+1)* DEF_SIZE;
-        char *newBuf = new char[newBufLength];
-        strcpy_s(newBuf, bufLength, buf);
-
-        delete[] buf;
-        buf = newBuf;
-        bufLength = newBufLength;
-        length = strlen(buf);
-    }
-    if ( pos > length)
-    {
-        //insert spaces
-        for(size_t i = length; i < pos; i++)
+    if(str != nullptr) {
+        if(pos <= n_char)
         {
-            buf[i] = ' ';
+            size_t temp = strlen(str);
+            if( pos + strlen(str) < buffer_size)
+            {
+                memcpy(buffer + pos, str, temp);
+                memcpy(buffer + pos + temp, "\0", sizeof(char));
+                n_char = pos + temp;
+            } else {
+                char* tmp = new char[buffer_size];
+                memcpy(tmp, buffer, buffer_size);
+                delete [] buffer;
+                buffer = new char[StringBuffer::size() + temp];
+                memcpy(buffer, tmp, buffer_size);
+                memcpy(buffer + pos, str, temp);
+                memcpy(buffer + pos + temp, "\0", sizeof(char));
+                n_char = pos + temp;
+                buffer += temp;
+                delete[] tmp;
+            }
+        }
+        /*
+        int str_l = strlen(str);
+        if(length + str_l >= bufLength)
+        {
+            int newSize = length + str_l;
+            int newBufLength = (newSize/ DEF_SIZE+1)* DEF_SIZE;
+            char *newBuf = new char[newBufLength];
+            strcpy_s(newBuf, bufLength, buf);
+
+            delete[] buf;
+            buf = newBuf;
+            bufLength = newBufLength;
+            length = strlen(buf);
+        }
+        if ( pos > length)
+        {
+            //insert spaces
+            for(size_t i = length; i < pos; i++)
+            {
+                buf[i] = ' ';
+            }
+
+            buf[pos] = 0;
+        }else {
+            // move forward the chars starting from pos
+            for (int i = length; i >= (signed) pos; i--)
+                buf[str_l + i] = buf[i];
         }
 
-        buf[pos] = 0;
-    }else {
-        // move forward the chars starting from pos
-        for (int i = length; i >= (signed) pos; i--)
-            buf[str_l + i] = buf[i];
+        //insert string
+        for(int i = 0; i < str_l; i++)
+            buf[i + pos] = str[i];
+
+        length = strlen(buf);
+         */
     }
 
-    //insert string
-    for(int i = 0; i < str_l; i++)
-        buf[i + pos] = str[i];
-
-    length = strlen(buf);
 }
 
 /*inserisce il contenuto di sb nella posizione pos del buffer; o se pos è maggiore di size (),
  * inserisce spazi tra size () e pos, riallocando il buffer se necessario*/
 void StringBuffer::insert(const StringBuffer &sb, size_t pos) {
-    char *str = sb.buf;
-    insert(str, pos);
+    if(pos <= n_char)
+    {
+        if( pos + sb.n_char < buffer_size)
+        {
+            memcpy(buffer + pos, sb.buffer, sb.n_char);
+            memcpy(buffer + pos + sb.n_char, "\0", sizeof(char));
+            n_char = pos + sb.n_char;
+        } else {
+            char* tmp = new char[buffer_size];
+            memcpy(tmp, buffer, buffer_size);
+            delete[] StringBuffer::buffer;
+            buffer = new char[StringBuffer::size() + sb.n_char];
+            memcpy(StringBuffer::buffer, tmp, StringBuffer::buffer_size);
+            memcpy(StringBuffer::buffer + pos, sb.buffer, sb.buffer_size);
+            memcpy(StringBuffer::buffer + pos + sb.buffer_size, "\0", sizeof(char));
+            StringBuffer::n_char = pos + sb.buffer_size;
+            StringBuffer::buffer += sb.buffer_size;
+            delete[] tmp;
+        }
+    }
+    /*char *str = sb.buf;
+    insert(str, pos);*/
 }
 
 //aggiunge i caratteri contenuti in str in coda a quelli
 //memorizzati nel buffer, riallocando il buffer se necessario;
 void StringBuffer::append(const char *str) {
+    if(str != nullptr)
+    {
+        size_t length = strlen(str);
+        if(n_char + length < buffer_size) {
+            memcpy(buffer + n_char, str, length)
+        }
+    }
 
-    int pos = strlen(buf);
-    insert(str,pos); //la riallocazione eventuale la fa l'insert
+    //int pos = strlen(buf);
+    //insert(str,pos); //la riallocazione eventuale la fa l'insert
 }
 
 //aggiunge i caratteri contenuti nell’oggetto sb in
@@ -126,7 +184,7 @@ void StringBuffer::append(const StringBuffer &sb) {
 
 //restituisce un puntatore in sola lettura al buffer interno opportunamente terminato con un "\0";
 const char* StringBuffer::c_str() {
-    return buf;
+    return buffer;
 }
 
 //sostituisce la stringa memorizzata nel buffer con il contenuto

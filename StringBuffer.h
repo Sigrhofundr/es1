@@ -41,11 +41,10 @@ public:
     void set(const StringBuffer &s);
 
 private:
-    char* buf;
-    size_t length;
-    size_t bufLength;
+    char* buffer;
+    size_t buffer_size;
+    int n_char;
 
-    static const int DEF_SIZE = 20;
-    static const int AUTO_INCREASE_SIZE = DEF_SIZE;
+    static const size_t DEF_SIZE = 20;
 
 };
