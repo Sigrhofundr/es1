@@ -167,7 +167,20 @@ void StringBuffer::append(const char *str) {
     {
         size_t length = strlen(str);
         if(n_char + length < buffer_size) {
-            memcpy(buffer + n_char, str, length)
+            memcpy(buffer + n_char, str, length);
+            memcpy(buffer + n_char + length, "\0", sizeof(char));
+            n_char = n_char + length;
+        } else {
+            char* tmp = new char[buffer_size];
+            memcpy(tmp, buffer, buffer_size);
+            delete[] buffer;
+            buffer = new char[StringBuffer::size() + length];
+            memcpy(buffer, tmp, buffer_size);
+            memcpy(buffer + n_char, str, length);
+            memcpy(buffer + n_char + length, "\0", sizeof(char));
+            n_char = n_char + length;
+            buffer_size = buffer_size + length;
+            delete[] tmp;
         }
     }
 
@@ -178,8 +191,24 @@ void StringBuffer::append(const char *str) {
 //aggiunge i caratteri contenuti nell’oggetto sb in
 //coda a quelli memorizzati nel buffer, riallocando il buffer se necessario;
 void StringBuffer::append(const StringBuffer &sb) {
-    char *str = sb.buf;
-    append(str);
+    //char *str = sb.buf;
+    //append(str);
+    if(n_char + sb.n_char < buffer_size) {
+        memcpy(buffer + n_char, sb.buffer, sb.n_char);
+        memcpy(buffer + n_char + sb.n_char, "\0", sizeof(char));
+        n_char += sb.n_char;
+    } else {
+        char* tmp = new char[buffer_size];
+        memcpy(tmp, buffer, buffer_size);
+        delete[] buffer;
+        buffer = new char[StringBuffer::size() + sb.n_char];
+        memcpy(buffer, tmp, n_char);
+        memcpy(buffer + n_char, sb.buffer, sb.n_char);
+        memcpy(buffer + n_char + sb.n_char, sb.buffer, sb.n_char);
+        n_char += sb.n_char;
+        buffer_size += sb.n_char;
+        delete[] tmp;
+    }
 }
 
 //restituisce un puntatore in sola lettura al buffer interno opportunamente terminato con un "\0";
@@ -190,13 +219,29 @@ const char* StringBuffer::c_str() {
 //sostituisce la stringa memorizzata nel buffer con il contenuto
 //dell’array s , riallocando il buffer se necessario;
 void StringBuffer::set(const char *str) {
-    clear();
-    append(str);
+    if(str != nullptr) {
+        size_t length = strlen(str);
+        if( length < buffer_size) {
+            memcpy(buffer, str, length);
+            memcpy(buffer + length, "\0", sizeof(char));
+            n_char = length;
+        } else {
+            delete [] buffer;
+            buffer = new char [length];
+            memcpy(buffer, str, length);
+            memcpy(buffer + length, "\0", sizeof(char));
+            buffer_size = length;
+            n_char = length;
+        }
+    }
+    //clear();
+    //append(str);
 }
 
 //sostituisce la stringa memorizzata nel buffer con il
 //contenuto dell’oggetto s, riallocando il buffer se necessario.
-void StringBuffer::set(const StringBuffer &s) {
-    set(s.buf);
-}
+/*void StringBuffer::set(const StringBuffer &s) {
+    //set(s.buf);
+    set(s.buffer); //maybe work
+}*/
 

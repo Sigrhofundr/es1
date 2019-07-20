@@ -45,6 +45,6 @@ private:
     size_t buffer_size;
     int n_char;
 
-    static const size_t DEF_SIZE = 20;
+    static const size_t DEF_SIZE = 100;
 
 };
